@@ -1,0 +1,15 @@
+stages: [test]
+
+backend:
+  stage: test
+  image: eclipse-temurin:25-jdk
+  script: ["./mvnw --batch-mode verify"]
+
+frontend:
+  stage: test
+  image: node:24-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run test:ci
+    - npm run build

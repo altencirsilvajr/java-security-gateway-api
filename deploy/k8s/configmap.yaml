@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-gateway
+data:
+  OIDC_ISSUER_URI: "https://identity.example.com/realms/security-gateway"
+  SECURITY_ISSUER: "https://identity.example.com/realms/security-gateway"
+  SECURITY_CLIENT_ID: "operations-portal"
+  SECURITY_QUOTA_LIMIT: "30"
+  SECURITY_QUOTA_WINDOW: "1m"
+  SPRING_DATA_REDIS_HOST: "redis"

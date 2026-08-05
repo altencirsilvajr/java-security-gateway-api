@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATA_REDIS_HOST: redis
+      SECURITY_CLIENT_ID: learning-ui
+      SECURITY_API_KEY_SHA256: ${SECURITY_API_KEY_SHA256:?define SECURITY_API_KEY_SHA256}
+      SECURITY_QUOTA_LIMIT: 10
+      SECURITY_QUOTA_WINDOW: 1m
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4208:8080"
+    depends_on:
+      - api

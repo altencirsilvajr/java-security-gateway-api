@@ -1,0 +1,55 @@
+<main>
+  <header>
+    <p class="eyebrow">JAVA 25 · SPRING BOOT 4.1 · ANGULAR 22.1</p>
+    <h1>Security Gateway Lab</h1>
+    <p class="lede">Observe duas identidades atravessando a mesma fronteira: uma pessoa no JWT e uma aplicação na API key.</p>
+  </header>
+
+  <section class="credentials" [formGroup]="credentials">
+    <label>Perfil
+      <select formControlName="profile">
+        <option value="operator">Operator · operations.read</option>
+        <option value="administrator">Administrator · + administration.read</option>
+      </select>
+    </label>
+    <label>API key (somente memória)
+      <input formControlName="apiKey" type="password" autocomplete="off" placeholder="valor usado para gerar o hash configurado">
+    </label>
+    <div class="actions">
+      <button (click)="issueToken()" [disabled]="busy()">1. Emitir JWT</button>
+      <button (click)="callOperation()" [disabled]="busy()">2. Chamar operação</button>
+      <button (click)="loadAudit()" [disabled]="busy()">3. Ler auditoria</button>
+      <button class="quiet" (click)="forgetCredentials()">Limpar memória</button>
+    </div>
+  </section>
+
+  <section class="grid">
+    <article>
+      <span class="label">JWT</span>
+      <strong>{{ token() ? 'presente na memória' : 'não emitido' }}</strong>
+      <small>O valor nunca é exibido nem persistido.</small>
+    </article>
+    <article>
+      <span class="label">Última operação</span>
+      <strong>{{ operation()?.status ?? '—' }}</strong>
+      <small *ngIf="operation() as value">user={{ value.userId }} · client={{ value.clientId }}</small>
+    </article>
+    <article>
+      <span class="label">Recusas visíveis</span>
+      <strong>{{ audits().length }}</strong>
+      <small>Somente metadados seguros e correlation ID.</small>
+    </article>
+  </section>
+
+  <section class="details">
+    <div>
+      <h2>Auditoria</h2>
+      <p *ngIf="audits().length === 0" class="muted">Use um perfil sem escopo ou exceda a quota para gerar evidência.</p>
+      <ol><li *ngFor="let event of audits()"><b>{{ event.reason }}</b> · {{ event.userId }} / {{ event.clientId }}<br><code>{{ event.correlationId }}</code></li></ol>
+    </div>
+    <div>
+      <h2>Linha do tempo local</h2>
+      <ol><li *ngFor="let item of timeline()">{{ item }}</li></ol>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-gateway
+spec:
+  selector:
+    app: security-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

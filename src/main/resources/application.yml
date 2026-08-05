@@ -15,6 +15,9 @@ management:
     health:
       probes:
         enabled: true
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 security:
   issuer: ${SECURITY_ISSUER:http://localhost:8080}
   api-clients:
