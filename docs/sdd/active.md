@@ -15,7 +15,7 @@ Construir um laboratório vertical Java 25 e Spring Boot 4.1 no qual uma operaç
 
 ## Incrementos
 
-1. Bootstrap de desenvolvimento rastreável.
-2. Fronteira de segurança testada por HTTP.
+1. Bootstrap de desenvolvimento rastreável — entregue.
+2. Fronteira de segurança testada por HTTP — entregue.
 3. Quota Redis e auditoria segura.
 4. Interface Angular e superfície de entrega.
