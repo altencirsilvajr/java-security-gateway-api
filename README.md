@@ -63,7 +63,7 @@ Os testes HTTP cobrem 200, 401, 403 e 429. O teste Testcontainers usa Redis real
 - MDC, Micrometer Tracing e `X-Correlation-Id`: correlação.
 - `deploy/k8s`: Deployment, Service, ConfigMap e Secret de exemplo.
 - `deploy/openshift`: Route TLS edge.
-- Jenkinsfile e GitLab CI publicam os gates equivalentes. O workflow de GitHub Actions está em `docs/examples/github-actions-ci.yml`: mova-o para `.github/workflows/ci.yml` depois de autenticar o publicador com o scope `workflow`.
+- GitHub Actions é a CI executada; Jenkinsfile e GitLab CI documentam pipelines equivalentes.
 
 Nunca aplique `secret.example.yaml` sem substituir o placeholder e integrar um mecanismo real de secrets. O Deployment roda como usuário não-root, remove capabilities e usa filesystem somente leitura.
 
