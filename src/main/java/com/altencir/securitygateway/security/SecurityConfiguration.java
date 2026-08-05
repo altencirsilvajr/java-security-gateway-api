@@ -1,5 +1,6 @@
 package com.altencir.securitygateway.security;
 
+import com.altencir.securitygateway.audit.SecurityAuditLog;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -14,7 +15,8 @@ public class SecurityConfiguration {
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       ApiKeyAuthenticationFilter apiKeyFilter,
-      ProblemResponder problems) throws Exception {
+      ProblemResponder problems,
+      SecurityAuditLog audit) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -27,13 +29,21 @@ public class SecurityConfiguration {
             .anyRequest().authenticated())
         .oauth2ResourceServer(resourceServer -> resourceServer
             .jwt(Customizer.withDefaults())
-            .authenticationEntryPoint((request, response, exception) ->
-                problems.write(request, response, 401, "Unauthorized", "unauthorized")))
+            .authenticationEntryPoint((request, response, exception) -> {
+              audit.denied(request, null, "invalid-jwt");
+              problems.write(request, response, 401, "Unauthorized", "unauthorized");
+            }))
         .exceptionHandling(exceptions -> exceptions
-            .authenticationEntryPoint((request, response, exception) ->
-                problems.write(request, response, 401, "Unauthorized", "unauthorized"))
-            .accessDeniedHandler((request, response, exception) ->
-                problems.write(request, response, 403, "Forbidden", "forbidden")))
+            .authenticationEntryPoint((request, response, exception) -> {
+              audit.denied(request, null, "missing-jwt");
+              problems.write(request, response, 401, "Unauthorized", "unauthorized");
+            })
+            .accessDeniedHandler((request, response, exception) -> {
+              audit.denied(request,
+                  org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication(),
+                  "insufficient-scope");
+              problems.write(request, response, 403, "Forbidden", "forbidden");
+            }))
         .addFilterAfter(apiKeyFilter, BearerTokenAuthenticationFilter.class);
     return http.build();
   }

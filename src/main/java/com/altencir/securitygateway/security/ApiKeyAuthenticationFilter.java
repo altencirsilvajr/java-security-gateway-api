@@ -1,5 +1,6 @@
 package com.altencir.securitygateway.security;
 
+import com.altencir.securitygateway.audit.SecurityAuditLog;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,10 +14,12 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
   public static final String CLIENT_ID_ATTRIBUTE = ApiKeyAuthenticationFilter.class.getName() + ".clientId";
   private final ApiClientRegistry registry;
   private final ProblemResponder problems;
+  private final SecurityAuditLog audit;
 
-  public ApiKeyAuthenticationFilter(ApiClientRegistry registry, ProblemResponder problems) {
+  public ApiKeyAuthenticationFilter(ApiClientRegistry registry, ProblemResponder problems, SecurityAuditLog audit) {
     this.registry = registry;
     this.problems = problems;
+    this.audit = audit;
   }
 
   @Override
@@ -30,6 +33,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     var clientId = registry.authenticate(request.getHeader("X-Api-Key"));
     if (clientId.isEmpty()) {
+      audit.denied(request, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication(),
+          "invalid-api-key");
       problems.write(request, response, 401, "Unauthorized", "unauthorized");
       return;
     }

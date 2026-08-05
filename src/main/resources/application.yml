@@ -20,3 +20,6 @@ security:
   api-clients:
     - client-id: ${SECURITY_CLIENT_ID:}
       key-sha256: ${SECURITY_API_KEY_SHA256:}
+  quota:
+    limit: ${SECURITY_QUOTA_LIMIT:30}
+    window: ${SECURITY_QUOTA_WINDOW:1m}

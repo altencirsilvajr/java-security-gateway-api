@@ -7,7 +7,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,6 +25,18 @@ class SecurityFlowTest {
 
   @LocalServerPort
   private int port;
+
+  @Autowired
+  private com.altencir.securitygateway.quota.InMemoryQuotaCounter quotaCounter;
+
+  @Autowired
+  private com.altencir.securitygateway.audit.SecurityAuditLog auditLog;
+
+  @BeforeEach
+  void resetState() {
+    quotaCounter.clear();
+    auditLog.clear();
+  }
 
   @Test
   void validJwtAndApiKeyAllowOperationalRequest() throws Exception {
@@ -51,6 +65,10 @@ class SecurityFlowTest {
 
     assertThat(response.statusCode()).isEqualTo(401);
     assertThat(response.body()).contains("unauthorized").doesNotContain("wrong-key");
+    assertThat(auditLog.snapshot()).singleElement().satisfies(event -> {
+      assertThat(event.reason()).isEqualTo("invalid-api-key");
+      assertThat(event.toString()).doesNotContain("wrong-key");
+    });
   }
 
   @Test
@@ -59,6 +77,23 @@ class SecurityFlowTest {
 
     assertThat(response.statusCode()).isEqualTo(403);
     assertThat(response.body()).contains("forbidden");
+  }
+
+  @Test
+  void fourthClientRequestInWindowIsRateLimitedAndAudited() throws Exception {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      assertThat(protectedGet("administrator", "/api/administration/audit", "integration-api-key").statusCode())
+          .isEqualTo(200);
+    }
+
+    var response = protectedGet("administrator", "/api/administration/audit", "integration-api-key");
+
+    assertThat(response.statusCode()).isEqualTo(429);
+    assertThat(response.body()).contains("quota-exceeded");
+    assertThat(auditLog.snapshot()).anySatisfy(event -> {
+      assertThat(event.reason()).isEqualTo("quota-exceeded");
+      assertThat(event.clientId()).isEqualTo("integration-client");
+    });
   }
 
   private HttpResponse<String> protectedGet(String profile, String path, String apiKey)
